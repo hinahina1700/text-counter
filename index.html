@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>らっこカウント - シンプルな文字数カウント</title>
+    <style>
+        /* 💡 画面全体の基本デザイン（シンプルで目に優しい色） */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f7fafc;
+            color: #2d3748;
+            padding: 30px 20px;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        h1 {
+            font-size: 24px;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #4a5568;
+        }
+
+        /* 💡 入力エリアの装飾 */
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 15px;
+            box-sizing: border-box;
+            border: 2px solid #cbd5e0;
+            border-radius: 8px;
+            font-size: 16px;
+            resize: vertical;
+            background-color: #ffffff;
+        }
+        textarea:focus {
+            border-color: #a0aec0;
+            outline: none;
+        }
+
+        /* 💡 結果表示 */
+        .result {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 12px;
+            text-align: right;
+            color: #4a5568;
+        }
+        #char-count {
+            font-size: 24px;
+            color: #2b6cb0;
+        }
+        
+        /* 💡 区切り線 */
+        hr {
+            margin: 40px 0 20px 0;
+            border: 0;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        /* 💡 2時間フリーモード発動ボタン */
+        .btn-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .premium-btn {
+            background-color: #4a5568;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        .premium-btn:hover {
+            background-color: #2d3748;
+        }
+
+        /* 💡 例のじみに面白い案内文（初期状態は非表示） */
+        #special-notice {
+            display: none;
+            background-color: #fffaf0;
+            border: 1px solid #feebc8;
+            padding: 18px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-size: 14px;
+            color: #7b341e;
+        }
+
+        /* 💡 通常時に画面の下部に常駐するエリア */
+        #bottom-area {
+            margin-top: 60px;
+            text-align: center;
+            padding: 30px 20px;
+            background-color: #edf2f7;
+            color: #718096;
+            border-radius: 6px;
+            border: 1px dashed #cbd5e0;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🦦 らっこカウント</h1>
+    
+    <textarea id="text-input" placeholder="ここに文字を入力するか、ペーストしてください..."></textarea>
+    <div class="result">文字数: <span id="char-count">0</span> 文字</div>
+
+    <hr>
+
+    <div class="btn-container" id="button-zone">
+        <button class="premium-btn" onclick="activatePremiumMode()">🎬 2時間完全フリーモードを発動する</button>
+    </div>
+
+    <div id="special-notice">
+        <strong>🛠️ 特定の拡張機能をご利用の方へ（お願い）</strong><br style="margin-bottom: 5px;">
+        まだ無名すぎて応援もクソもない弱小サイトですが、サーバー代を払うために動画を1回だけ見ていただけると、中の人が泣いて喜びます。<br>
+        30秒だけ動画を見ていただければ、その状態のままでも「2時間完全フリー枠」が発動しますので、もしよければご協力お願いします…！
+    </div>
+
+    <div id="bottom-area">
+        【ここに通常の枠が表示されます】
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. 文字数カウント機能
+        // ==========================================
+        const textInput = document.getElementById('text-input');
+        const charCount = document.getElementById('char-count');
+        
+        textInput.addEventListener('input', () => {
+            charCount.textContent = textInput.value.length;
+        });
+
+        // ==========================================
+        // 2. 読み込み時の判定＆セッションチェック
+        // ==========================================
+        window.addEventListener('load', () => {
+            // 特定の環境（拡張機能など）を検知するためのダミー要素
+            const dummyElement = document.createElement('div');
+            dummyElement.className = 'adsbox ads google-ads';
+            dummyElement.style.display = 'block';
+            document.body.appendChild(dummyElement);
+
+            // 要素が遮断されて高さが0になっている場合のみ、案内文を表示
+            if (dummyElement.offsetHeight === 0) {
+                document.getElementById('special-notice').style.display = 'block';
+            }
+            dummyElement.remove();
+
+            // 過去に発動した2時間枠が有効期限内かチェック
+            checkActiveSession();
+        });
+
+        // ==========================================
+        // 3. 2時間フリーモードのコントロール
+        // ==========================================
+        function activatePremiumMode() {
+            // 本番環境ではここに動画広告の再生完了イベントが入ります
+            alert("動画の再生が完了しました！2時間フリーモードを開始します。");
+
+            const now = new Date();
+            const expireTime = now.getTime() + (2 * 60 * 60 * 1000); // 現在から2時間後
+            
+            localStorage.setItem('free_mode_until', expireTime);
+            applyFreeMode();
+        }
+
+        // 画面を「完全フリー（広告や案内をすべて非表示）」に切り替える
+        function applyFreeMode() {
+            document.getElementById('bottom-area').style.display = 'none';
+            document.getElementById('special-notice').style.display = 'none';
+            document.getElementById('button-zone').style.display = 'none'; 
+        }
+
+        // ページを開いたときに有効期限をチェックする関数
+        function checkActiveSession() {
+            const savedTime = localStorage.getItem('free_mode_until');
+            if (savedTime) {
+                const now = new Date().getTime();
+                if (savedTime > now) {
+                    // 有効期限内なら自動でフリーモードを適用
+                    applyFreeMode();
+                    
+                    // 2時間経過した瞬間に通常モードに戻すタイマー（バックグラウンド作動）
+                    setTimeout(() => {
+                        localStorage.removeItem('free_mode_until');
+                        window.location.reload(); // ページをリフレッシュして通常に戻す
+                    }, savedTime - now);
+                } else {
+                    // 期限が切れていたらデータを削除
+                    localStorage.removeItem('free_mode_until');
+                }
+            }
+        }
+    </script>
+</body>
+</html>
